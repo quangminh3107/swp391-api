@@ -9,22 +9,29 @@ services:
     container_name: tara-api
     restart: unless-stopped
     ports:
-      - "9999:9999"
+      - "${API_PORT:-9999}:9999"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - JAVA_OPTS=-Xms512m -Xmx1024m
-      # Database config (nếu muốn override)
-      # - SPRING_DATASOURCE_URL=jdbc:postgresql://212.85.25.175:5432/taradb
-      # - SPRING_DATASOURCE_USERNAME=postgres
-      # - SPRING_DATASOURCE_PASSWORD=slm123slm123
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - JAVA_OPTS=${JAVA_OPTS:--Xms512m -Xmx1024m}
+      # Database config (override from .env file)
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      # MinIO config
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
+      # JWT key
+      - CONSTANT_KEY_SIGNER_KEY=${CONSTANT_KEY_SIGNER_KEY}
     networks:
       - tara-network
-#    healthcheck:
-#      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/actuator/health"]
-#      interval: 30s
-#      timeout: 10s
-#      retries: 3
-#      start_period: 60s
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
     deploy:
       resources:
         limits:
@@ -38,6 +45,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    volumes:
+      - ./logs/app:/app/logs
 
   # Nginx Reverse Proxy
   nginx:
@@ -45,12 +54,12 @@ services:
     container_name: tara-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./logs/nginx:/var/log/nginx
-      # SSL certificates (nếu có)
+      # SSL certificates (uncomment if you have SSL)
       # - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       tara-api:
