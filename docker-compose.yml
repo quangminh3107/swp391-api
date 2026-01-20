@@ -7,40 +7,33 @@ services:
       dockerfile: Dockerfile
     container_name: tara-api
     restart: unless-stopped
+
     ports:
-      - "${API_PORT:-9999}:9999"
+      - "9999:9999"
+
+    # ❗ KHÔNG override config
     environment:
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
-      - JAVA_OPTS=${JAVA_OPTS:--Xms512m -Xmx1024m}
-      # Database config (override from .env file)
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      # MinIO config
-      - MINIO_ENDPOINT=${MINIO_ENDPOINT}
-      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
-      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
-      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME}
-      # JWT key
-      - CONSTANT_KEY_SIGNER_KEY=${CONSTANT_KEY_SIGNER_KEY}
+      - SPRING_PROFILES_ACTIVE=prod
+
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 90s
+
+    # ⚠️ deploy chỉ có tác dụng với Swarm (có thể giữ hoặc bỏ)
     deploy:
       resources:
         limits:
           cpus: '1.0'
           memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
+
     logging:
-      driver: "json-file"
+      driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+
     volumes:
       - ./logs/app:/app/logs
