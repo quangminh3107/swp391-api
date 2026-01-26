@@ -42,8 +42,8 @@ RUN mkdir -p /app/logs
 # Expose port
 EXPOSE 9999
 
-# JVM options for production
-ENV JAVA_OPTS="-Xms512m -Xmx1024m -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication"
+# JVM options for production - tối ưu cho 1GB RAM và 1 core
+ENV JAVA_OPTS="-Xms256m -Xmx768m -XX:+UseContainerSupport -XX:MaxRAMPercentage=70.0 -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=200 -XX:+ParallelRefProcEnabled -XX:+DisableExplicitGC"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
